@@ -257,6 +257,27 @@ class Team(Entity):
         return f'Team(name="{self.full_name}")'
 
 
+class Bet(Entity):
+    amount: int
+    type: str
+    odds: float
+    _user_id: str
+
+    def __init__(
+        self,
+        session: requests.Session,
+        _id: str,
+        amount: int,
+        type: str,
+        odds: float,
+        **kwargs,
+    ) -> None:
+        super().__init__(session, _id)
+        self.amount = amount
+        self.type = type
+        self.odds = odds
+
+
 class Blaseball:
     _session: requests.Session
     _entity_map: MutableMapping
@@ -271,6 +292,9 @@ class Blaseball:
 
     def teams(self) -> List[Team]:
         return [Team(self._session, **t) for t in _get_all_teams(self._session)]
+
+    def active_bets(self) -> List[Bet]:
+        return [Bet(self._session, **b) for b in _get_active_bets(self._session)]
 
 
 def _api_route(path: str) -> str:
@@ -317,3 +341,12 @@ def _get_team(session: requests.Session, id: str) -> dict:
     resp = session.get(url, params={"id": id})
     resp.raise_for_status()
     return resp.json()
+
+
+@backoff.on_exception(backoff.expo, requests.HTTPError, logger="blaseball", max_tries=5)
+def _get_active_bets(session: requests.Session) -> list:
+    url = _api_route("api/getActiveBets")
+    resp = session.get(url)
+    resp.raise_for_status()
+    return resp.json()
+
