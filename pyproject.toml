@@ -8,6 +8,7 @@ authors = ["Sean Gillespie <sean@swgillespie.me>"]
 python = "^3.8"
 requests = "^2.24.0"
 backoff = "^1.10.0"
+python-socketio = {extras = ["client"], version = "^4.6.0"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

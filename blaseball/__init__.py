@@ -2,11 +2,13 @@ import requests
 import backoff
 import logging
 import sys
+import socketio
 from typing import MutableMapping, List
 
 __version__ = "0.1.0"
 
 _BLASEBALL_BASE_URL = "https://blaseball.com/"
+_BLASEBALL_WS_URL = "wss://blaseball.com/"
 _log = logging.getLogger("blaseball")
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
@@ -295,6 +297,16 @@ class Blaseball:
 
     def active_bets(self) -> List[Bet]:
         return [Bet(self._session, **b) for b in _get_active_bets(self._session)]
+
+    def events(self) -> socketio.Client:
+        cookies = map(lambda x: f"{x[0]}={x[1]}", self._session.cookies.items())
+        client = socketio.Client()
+        client.connect(
+            _BLASEBALL_WS_URL,
+            headers={"Cookie": ",".join(cookies),},
+            transports="websocket",
+        )
+        return client
 
 
 def _api_route(path: str) -> str:
